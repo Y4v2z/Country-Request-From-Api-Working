@@ -7,9 +7,32 @@
 document.querySelector("#btnSearch").addEventListener("click", () => {
     let text = document.querySelector("#txtSearch").value;
     document.querySelector("#details").style.opacity = 0;
-
+    document.querySelector("#loading").style.display = "block"
     getCountry(text);
+});
+document.querySelector("#btnLocation").addEventListener("click", () => {
+    if (navigator.geolocation) {
+        document.querySelector("#loading").style.display = "block";
+        navigator.geolocation.getCurrentPosition(onSuccess, onError);
+    }
 })
+function onError(err) {
+    console.log(err);
+    document.querySelector("#loading").style.display = ("none");
+};
+async function onSuccess(position) {
+    let lat = position.coords.latitude;
+    let lng = position.coords.longitude;
+    // Use opencagedata
+    const apiKey = "d4ef0c5ed9654bbfa0aaae86ec4b41be";
+    const url = `https://api.opencagedata.com/geocode/v1/json?q=${lat}+${lng}&key=${apiKey}`;
+    const response = await fetch(url);
+    const data = await response.json();
+    const country = data.results[0].components.country;
+    document.querySelector("#txtSearch").value = country;
+    document.querySelector("#btnSearch").click();
+
+}
 // function getCountry(country) {
 //     const request = new XMLHttpRequest();
 //     request.open("GET", "https://restcountries.com/v3.1/name/" + country);
@@ -28,29 +51,51 @@ document.querySelector("#btnSearch").addEventListener("click", () => {
 //         })
 //     });
 // }
-function getCountry(country) {
-    fetch("https://restcountries.com/v3.1/name/" + country)
-        .then((response) => {
-            if (!response.ok) {
-                throw new Error("No Counrty that name");
-            }
-            return response.json();
-        }).then(data => {
-            renderCountry(data[0]);
-            const countries = data[0].borders;
-            if (!countries) {
-                throw Error("There are no neighbors")
-            }
-            return fetch("https://restcountries.com/v3.1/alpha?codes=" + countries.toString())
-        }).then(response => {
-            return response.json()
-        }).then(data => {
-            renderNeighbors(data)
-        }).catch(err => {
-            renderError(err)
-        })
+// function getCountry(country) {
+//     fetch("https://restcountries.com/v3.1/name/" + country)
+//         .then((response) => {
+//             if (!response.ok) {
+//                 throw new Error("No Counrty that name");
+//             }
+//             return response.json();
+//         }).then(data => {
+//             renderCountry(data[0]);
+//             const countries = data[0].borders;
+//             if (!countries) {
+//                 throw Error("There are no neighbors")
+//             }
+//             return fetch("https://restcountries.com/v3.1/alpha?codes=" + countries.toString())
+//         }).then(response => {
+//             return response.json()
+//         }).then(data => {
+//             renderNeighbors(data)
+//         }).catch(err => {
+//             renderError(err)
+//         })
+// }
+async function getCountry(country) {
+    try {
+        const response = await fetch("https://restcountries.com/v3.1/name/" + country);
+        if (!response.ok) {
+            throw new Error("No Counrty that name");
+        }
+        const data = await response.json();
+        renderCountry(data[0]);
+
+        const countries = data[0].borders;
+        if (!countries) {
+            throw Error("There are no neighbors")
+        }
+        const response2 = await fetch("https://restcountries.com/v3.1/alpha?codes=" + countries.toString());
+        const neighbors = await response2.json();
+        renderNeighbors(neighbors);
+    }
+    catch (err) {
+        renderError(err)
+    }
 }
 function renderCountry(data) {
+    document.querySelector("#loading").style.display = ("none");
     document.querySelector("#country-details").innerHTML = "";
     document.querySelector("#neighbors").innerHTML = "";
 
@@ -100,6 +145,7 @@ function renderNeighbors(data) {
     document.querySelector("#neighbors").innerHTML = html;
 }
 function renderError(err) {
+    document.querySelector("#loading").style.display = ("none");
     const html = `
     <div class="alert alert-danger">
         ${err.message}
