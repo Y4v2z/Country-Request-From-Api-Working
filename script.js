@@ -56,7 +56,6 @@ async function getCountry(country) {
         renderError(err)
     }
 }
-
 function renderCountry(data) {
     document.querySelector("#loading").style.display = ("none");
     document.querySelector("#country-details").innerHTML = "";
@@ -89,15 +88,15 @@ function renderCountry(data) {
     `;
     document.querySelector("#details").style.opacity = 1;
     document.querySelector("#country-details").innerHTML = html;
+    addEventForCountryData(data);
 }
-
 function renderNeighbors(data) {
     let html = "";
     for (let country of data) {
         html += `
                 <div class="col-2 mt-2">
                     <div class="card">
-                        <img data-name="${country.name.common}" src="${country.flags.png}" class="card-img-top">
+                        <img data-name="${country.name.common}" src="${country.flags.png}" class="card-img-top flags">
                         <div class="card-body">
                             <h6 class="card-title">${country.name.common}</h6>
                         </div>
@@ -122,7 +121,7 @@ function renderError(err) {
     document.querySelector("#errors").innerHTML = html;
 }
 function addEventToFlags() {
-    const countryFlags = document.querySelectorAll("img");
+    const countryFlags = document.querySelectorAll(".flags");
     countryFlags.forEach(flag => {
         flag.addEventListener("click", () => {
             const flagName = flag.dataset.name
@@ -133,15 +132,17 @@ function addEventToFlags() {
 function addEventForCountryData(data) {
     const language = document.querySelector("#language");
     language.addEventListener("click", () => {
-        getSameLanguageCountryFromFetch(Object.values(data.languages[0]));
+        getSameLanguageCountryFromFetch(Object.values(data.languages));
     })
 }
-
 async function getSameLanguageCountryFromFetch(language) {
+    console.log(language);
     try {
         const response = await fetch("https://restcountries.com/v3.1/lang/" + language);
+        console.log(response);
         if (!response.ok) {
             throw new Error("No country same language")
+
         }
         const data = await response.json();
         console.log(data);
@@ -150,11 +151,3 @@ async function getSameLanguageCountryFromFetch(language) {
         renderError(err)
     }
 }
-
-// function addEventToLanguage() {
-//     const countryLanguage = document.querySelector("#language");
-//     countryLanguage.addEventListener("click", getSameLanguageCountry())
-//     console.log(countryLanguage);
-// }
-// addEventToLanguage()
-// }
