@@ -11,15 +11,14 @@ textInput.addEventListener("keydown", (e) => {
     if (e.keyCode == 13) {
         getCountry(text);
     }
-})
+});
 document.querySelector("#btnLocation").addEventListener("click", () => {
     if (navigator.geolocation) {
         document.querySelector("#loading").style.display = "block";
         navigator.geolocation.getCurrentPosition(onSuccess, onError);
     }
-})
+});
 function onError(err) {
-    console.log(err);
     document.querySelector("#loading").style.display = ("none");
 };
 async function onSuccess(position) {
@@ -34,7 +33,7 @@ async function onSuccess(position) {
     document.querySelector("#txtSearch").value = country;
     document.querySelector("#btnSearch").click();
 
-}
+};
 async function getCountry(country) {
     try {
         const response = await fetch("https://restcountries.com/v3.1/name/" + country);
@@ -55,12 +54,13 @@ async function getCountry(country) {
     catch (err) {
         renderError(err)
     }
-}
+};
 function renderCountry(data) {
     document.querySelector("#loading").style.display = ("none");
     document.querySelector("#country-details").innerHTML = "";
     document.querySelector("#neighbors").innerHTML = "";
-
+    document.querySelector("#sameLanguage").innerHTML = "";
+    textInput.value = data.name.common;
     let html = `
             <div class="col-4">
                 <img src="${data.flags.png}" alt="" class="img-fluid">
@@ -74,7 +74,7 @@ function renderCountry(data) {
                 </div>
                 <div class="row">
                     <div class="col-4">Language:</div>
-                    <div class="col-8" id="language">${Object.values(data.languages)}</div>
+                    <div class="col-8" id="language"><a href="#">${Object.values(data.languages)}</a></div>
                 </div>
                 <div class="row">
                     <div class="col-4">Capital:</div>
@@ -89,14 +89,14 @@ function renderCountry(data) {
     document.querySelector("#details").style.opacity = 1;
     document.querySelector("#country-details").innerHTML = html;
     addEventForCountryData(data);
-}
+};
 function renderNeighbors(data) {
     let html = "";
     for (let country of data) {
         html += `
                 <div class="col-2 mt-2">
                     <div class="card">
-                        <img data-name="${country.name.common}" src="${country.flags.png}" class="card-img-top flags">
+                        <img data-name="${country.name.common}" src="${country.flags.png}" class="card-img-top img-fluid flags">
                         <div class="card-body">
                             <h6 class="card-title">${country.name.common}</h6>
                         </div>
@@ -106,7 +106,7 @@ function renderNeighbors(data) {
     }
     document.querySelector("#neighbors").innerHTML = html;
     addEventToFlags();
-}
+};
 function renderError(err) {
     document.querySelector("#loading").style.display = ("none");
     const html = `
@@ -119,7 +119,7 @@ function renderError(err) {
         document.querySelector("#errors").innerHTML = "";
     }, 3000);
     document.querySelector("#errors").innerHTML = html;
-}
+};
 function addEventToFlags() {
     const countryFlags = document.querySelectorAll(".flags");
     countryFlags.forEach(flag => {
@@ -128,26 +128,40 @@ function addEventToFlags() {
             getCountry(flagName);
         })
     })
-}
+};
 function addEventForCountryData(data) {
     const language = document.querySelector("#language");
     language.addEventListener("click", () => {
         getSameLanguageCountryFromFetch(Object.values(data.languages));
     })
-}
+};
 async function getSameLanguageCountryFromFetch(language) {
-    console.log(language);
     try {
         const response = await fetch("https://restcountries.com/v3.1/lang/" + language);
-        console.log(response);
         if (!response.ok) {
             throw new Error("No country same language")
 
         }
         const data = await response.json();
-        console.log(data);
+        renderSameLanguageCountries(data)
     }
     catch (err) {
         renderError(err)
     }
-}
+};
+function renderSameLanguageCountries(data) {
+    let html = "";
+    for (let language of data) {
+        html += `
+                <ol class="list-group">
+                    <li class="list-group-item d-flex justify-content-between">
+                        <div class="fw-bold">
+                        ${language.name.common}
+                        </div>
+                        <span class="badge bg-primary rounded-pill">${language.capital}</span>
+                    </li>
+                </ol>
+            `;
+    }
+    document.querySelector("#sameLanguage").innerHTML = html;
+};
